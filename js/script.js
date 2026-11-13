@@ -608,7 +608,7 @@ function sampleNews() {
       date: daysFromNow(-10),
       description: "Over 200 residents joined the monthly clean-up drive last weekend.",
       details: "More than 200 residents, students, and local officials joined the monthly community clean-up drive held last weekend. The activity covered the plaza, the market area, and the riverside. The community office thanked all volunteers and reminded everyone that the next clean-up drive will be held again next month.",
-      image: "./Cleanup-drive-1024x682.webp"
+      image: "././Cleanup-drive-1024x682.webp"
     },
     {
       id: generateId(),
@@ -617,7 +617,7 @@ function sampleNews() {
       date: daysFromNow(-7),
       description: "The new health center is now accepting patients every weekday.",
       details: "The community health center is now open every Monday to Friday, from 8:00 AM to 4:00 PM. Residents can avail of free check-ups, medicines, and senior citizen consultations. Bring a valid ID when visiting the health center.",
-      image: "./New Health Center Now Open for Residents.jfif"
+      image: "././New Health Center Now Open for Residents.jfif"
     },
     {
       id: generateId(),
@@ -626,7 +626,7 @@ function sampleNews() {
       date: daysFromNow(-5),
       description: "Teams from different puroks will compete in basketball and volleyball.",
       details: "The annual youth sports league officially opens this month. Teams from different puroks will compete in basketball and volleyball at the covered court. Schedules and team brackets are posted at the community office bulletin board.",
-      image: "./Youth Sports League Kicks Off This Month.jfif"
+      image: "././Youth Sports League Kicks Off This Month.jfif"
     },
     {
       id: generateId(),
@@ -635,7 +635,7 @@ function sampleNews() {
       date: daysFromNow(-3),
       description: "Elementary and high school students may now submit scholarship forms.",
       details: "The community scholarship program is now accepting applications for elementary and high school students. Interested students may download or pick up forms at the community office. Deadline of submission is on the last Friday of this month.",
-      image: "./Scholarship Applications Now Open.jpg"
+      image: "././Scholarship Applications Now Open.jpg"
     },
     {
       id: generateId(),
@@ -644,7 +644,7 @@ function sampleNews() {
       date: daysFromNow(-1),
       description: "Portions of the main road will undergo repair starting next week.",
       details: "The public works office will begin road repair along the main road starting next week. One lane will be closed during working hours from 8:00 AM to 5:00 PM. Residents are advised to use alternate routes and to follow traffic personnel.",
-      image: "./Road Repair.jfif"
+      image: "././Road Repair.jfif"
     },
     {
       id: generateId(),
@@ -653,7 +653,7 @@ function sampleNews() {
       date: daysFromNow(0),
       description: "The community garden project harvested its first vegetables this week.",
       details: "The shared community garden project harvested its first batch of vegetables this week. The harvested produce was distributed to participating families. The community office encourages more residents to join the gardening group.",
-      image: "./Community-Garden.webp"
+      image: "././Community-Garden.webp"
     }
   ];
 }
@@ -780,7 +780,7 @@ function sampleActivities() {
       date: daysFromNow(-10),
       location: "Community Plaza",
       description: "Residents worked together to clean the plaza and surrounding streets.",
-      image: "./Cleanup-drive-1024x682.webp"
+      image: "././Cleanup-drive-1024x682.webp"
     },
     {
       id: generateId(),
@@ -788,7 +788,7 @@ function sampleActivities() {
       date: daysFromNow(-8),
       location: "Youth Center",
       description: "Young leaders joined team-building games and community planning talks.",
-      image: "./Youth Leadership Activity.jfif"
+      image: "././Youth Leadership Activity.jfif"
     },
     {
       id: generateId(),
@@ -796,7 +796,7 @@ function sampleActivities() {
       date: daysFromNow(-6),
       location: "Covered Court",
       description: "Friendly basketball matches among teams from different puroks.",
-      image: "./Inter-Purok Sports Activity.jfif"
+      image: "././Inter-Purok Sports Activity.jfif"
     },
     {
       id: generateId(),
@@ -804,7 +804,7 @@ function sampleActivities() {
       date: daysFromNow(-4),
       location: "Elementary School",
       description: "Volunteer teachers gave free reading and math tutorials for kids.",
-      image: "./Educational Tutorial Program.jpg"
+      image: "././Educational Tutorial Program.jpg"
     },
     {
       id: generateId(),
@@ -812,7 +812,7 @@ function sampleActivities() {
       date: daysFromNow(-2),
       location: "Riverside Area",
       description: "Volunteers planted 150 seedlings along the riverbank.",
-      image: "./Volunteer Tree Planting.webp"
+      image: "././Volunteer Tree Planting.webp"
     },
     {
       id: generateId(),
@@ -820,19 +820,19 @@ function sampleActivities() {
       date: daysFromNow(0),
       location: "Community Hall",
       description: "Residents turned over recyclable waste for the segregation program.",
-      image: "./Environmental Recycling Drive.webp"
+      image: "././Environmental Recycling Drive.webp"
     }
   ];
 }
 
 function sampleGallery() {
   return [
-    { id: generateId(), image: "./community-01.jpg", caption: "Community Plaza", date: daysFromNow(-12) },
-    { id: generateId(), image: "./community-02.jpg", caption: "Residents Assembly", date: daysFromNow(-10) },
-    { id: generateId(), image: "./Cleanup-drive-1024x682.webp", caption: "Clean-Up Drive", date: daysFromNow(-8) },
-    { id: generateId(), image: "./Cleanup-drive-1024x682.webp", caption: "Volunteers at Work", date: daysFromNow(-6) },
-    { id: generateId(), image: "./New Health Center Now Open for Residents.jfif", caption: "Health Center Visit", date: daysFromNow(-4) },
-    { id: generateId(), image: "./Youth Sports League Kicks Off This Month.jfif", caption: "Youth Sports Activity", date: daysFromNow(-2) }
+    { id: generateId(), image: "././community-01.jpg", caption: "Community Plaza", date: daysFromNow(-12) },
+    { id: generateId(), image: "././community-02.jpg", caption: "Residents Assembly", date: daysFromNow(-10) },
+    { id: generateId(), image: "././Cleanup-drive-1024x682.webp", caption: "Clean-Up Drive", date: daysFromNow(-8) },
+    { id: generateId(), image: "././Cleanup-drive-1024x682.webp", caption: "Volunteers at Work", date: daysFromNow(-6) },
+    { id: generateId(), image: "././New Health Center Now Open for Residents.jfif", caption: "Health Center Visit", date: daysFromNow(-4) },
+    { id: generateId(), image: "././Youth Sports League Kicks Off This Month.jfif", caption: "Youth Sports Activity", date: daysFromNow(-2) }
   ];
 }
 
