@@ -2,7 +2,7 @@
    Only runs when the site is hosted on http:// or https://.
    Opening the folder directly with file:// skips this file. */
 
-var CACHE_NAME = "community-connect-v35";
+var CACHE_NAME = "community-connect-v36";
 
 var CORE_FILES = [
   "index.html",
@@ -20,8 +20,12 @@ var CORE_FILES = [
   "user-login.html",
  "admin-login.html",
   "css/style.css",
-  "images/Community Plaza.jpg",
-  "images/Health Center Visit.jpg",
+  "images/cleanup-drive.webp",
+  "images/community-garden.webp",
+  "images/new-health-center.jpg",
+  "images/youth-sports-league.jpg",
+  "images/community-plaza.jpg",
+  "images/health-center-visit.jpg",
   "images/logo.svg"
 ];
 

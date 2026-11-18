@@ -596,6 +596,125 @@ var notifyBus = (function () {
 })();
 
 /* ------------------------------------------------------------
+   1d. MEDIA PATH NORMALIZATION
+   Older versions saved image names without the `images/` folder and
+   used filenames with spaces or the `.jfif` extension. GitHub Pages
+   and the local Node server can serve the files reliably when every
+   bundled image uses a lowercase, extension-safe path under `images/`.
+   Data URLs, uploaded files, absolute URLs, and IndexedDB references
+   are left untouched.
+   ------------------------------------------------------------ */
+
+var MEDIA_PATH_ALIASES = {
+  "cleanup-drive-1024x682.webp": "images/cleanup-drive.webp",
+  "community-garden.webp": "images/community-garden.webp",
+  "new health center now open for residents.jfif": "images/new-health-center.jpg",
+  "youth sports league kicks off this month.jfif": "images/youth-sports-league.jpg",
+  "scholarship applications now open.jpg": "images/scholarship-applications.jpg",
+  "road repair.jfif": "images/road-repair.jpg",
+  "youth leadership activity.jfif": "images/youth-leadership-activity.jpg",
+  "inter-purok sports activity.jfif": "images/inter-purok-sports-activity.jpg",
+  "educational tutorial program.jpg": "images/educational-tutorial-program.jpg",
+  "volunteer tree planting.webp": "images/volunteer-tree-planting.webp",
+  "environmental recycling drive.webp": "images/environmental-recycling-drive.webp",
+  "community plaza.jpg": "images/community-plaza.jpg",
+  "residents assembly.webp": "images/residents-assembly.webp",
+  "residents assembly.jfif": "images/residents-assembly.jpg",
+  "health center visit.jpg": "images/health-center-visit.jpg",
+  "water service interruption on saturday.jpg": "images/water-service-interruption.jpg",
+  "barangay assembly meeting.jfif": "images/barangay-assembly-meeting.jpg",
+  "free medical mission.jpeg": "images/free-medical-mission.jpg",
+  "school supplies distribution.jfif": "images/school-supplies-distribution.jpg",
+  "basketball tournament registration.jfif": "images/basketball-tournament-registration.jpg",
+  "fire safety inspection schedule.webp": "images/fire-safety-inspection.webp",
+  "senior citizens monthly meeting.jfif": "images/senior-citizens-monthly-meeting.jpg",
+  "reading program for kids.jfif": "images/reading-program-for-kids.jpg",
+  "community garden harvests first crops.jpg": "images/community-garden-harvests-first-crops.jpg",
+  "community-01.jpg": "images/community-plaza.jpg",
+  "community-02.jpg": "images/residents-assembly.webp",
+  "activity-01.jpg": "images/environmental-recycling-drive.webp",
+  "news-01.jpg": "images/cleanup-drive.webp",
+  "news-02.jpg": "images/new-health-center.jpg",
+  "news-03.jpg": "images/youth-sports-league.jpg"
+};
+
+function normalizeMediaSrc(src) {
+  var value = String(src == null ? "" : src).trim();
+  if (!value) return "";
+  if (/^(data:|blob:|idb:|https?:\/\/|\/\/)/i.test(value)) return value;
+
+  var clean = value.replace(/\\/g, "/");
+  while (clean.indexOf("./") === 0) clean = clean.slice(2);
+
+  // `/images/...` points to the domain root on GitHub Pages project sites.
+  // Convert it to a repository-relative path so it works there and locally.
+  if (clean.charAt(0) === "/") {
+    if (/^\/images\//i.test(clean)) clean = clean.slice(1);
+    else return clean;
+  }
+
+  var lower = clean.toLowerCase();
+  var base = lower.substring(lower.lastIndexOf("/") + 1);
+  if (MEDIA_PATH_ALIASES[base]) return MEDIA_PATH_ALIASES[base];
+
+  // Already a valid repository-relative image path.
+  if (lower.indexOf("images/") === 0) return clean;
+
+  // A bare image filename belongs in the repository's images folder.
+  if (/^[^/]+\.(?:jpe?g|png|gif|webp|jfif|svg)$/i.test(clean)) {
+    return "images/" + clean;
+  }
+
+  // Keep custom paths (for example `video1_files/clip.mp4`) unchanged.
+  return clean;
+}
+
+// Normalize every media field on one content record. Returns true when a
+// value changed so the migration can persist the repair only when needed.
+function normalizeItemMedia(item) {
+  if (!item || typeof item !== "object") return false;
+  var changed = false;
+
+  function normalizeField(key) {
+    if (item[key] === undefined || item[key] === null) return;
+    var next = normalizeMediaSrc(item[key]);
+    if (next !== item[key]) {
+      item[key] = next;
+      changed = true;
+    }
+  }
+
+  normalizeField("image");
+  normalizeField("video");
+  normalizeField("videoPoster");
+
+  if (Array.isArray(item.images)) {
+    item.images = item.images.map(function (src) {
+      var next = normalizeMediaSrc(src);
+      if (next !== src) changed = true;
+      return next;
+    });
+  }
+  if (Array.isArray(item.videos)) {
+    item.videos = item.videos.map(function (src) {
+      var next = normalizeMediaSrc(src);
+      if (next !== src) changed = true;
+      return next;
+    });
+  }
+
+  if (Array.isArray(item.images) && item.images.length && !item.image) {
+    item.image = item.images[0];
+    changed = true;
+  }
+  if (Array.isArray(item.videos) && item.videos.length && !item.video) {
+    item.video = item.videos[0];
+    changed = true;
+  }
+  return changed;
+}
+
+/* ------------------------------------------------------------
    2. SAMPLE DATA (shown when LocalStorage is empty)
    ------------------------------------------------------------ */
 
@@ -608,7 +727,7 @@ function sampleNews() {
       date: daysFromNow(-10),
       description: "Over 200 residents joined the monthly clean-up drive last weekend.",
       details: "More than 200 residents, students, and local officials joined the monthly community clean-up drive held last weekend. The activity covered the plaza, the market area, and the riverside. The community office thanked all volunteers and reminded everyone that the next clean-up drive will be held again next month.",
-      image: "././Cleanup-drive-1024x682.webp"
+      image: "images/cleanup-drive.webp"
     },
     {
       id: generateId(),
@@ -617,7 +736,7 @@ function sampleNews() {
       date: daysFromNow(-7),
       description: "The new health center is now accepting patients every weekday.",
       details: "The community health center is now open every Monday to Friday, from 8:00 AM to 4:00 PM. Residents can avail of free check-ups, medicines, and senior citizen consultations. Bring a valid ID when visiting the health center.",
-      image: "././New Health Center Now Open for Residents.jfif"
+      image: "images/new-health-center.jpg"
     },
     {
       id: generateId(),
@@ -626,7 +745,7 @@ function sampleNews() {
       date: daysFromNow(-5),
       description: "Teams from different puroks will compete in basketball and volleyball.",
       details: "The annual youth sports league officially opens this month. Teams from different puroks will compete in basketball and volleyball at the covered court. Schedules and team brackets are posted at the community office bulletin board.",
-      image: "././Youth Sports League Kicks Off This Month.jfif"
+      image: "images/youth-sports-league.jpg"
     },
     {
       id: generateId(),
@@ -635,7 +754,7 @@ function sampleNews() {
       date: daysFromNow(-3),
       description: "Elementary and high school students may now submit scholarship forms.",
       details: "The community scholarship program is now accepting applications for elementary and high school students. Interested students may download or pick up forms at the community office. Deadline of submission is on the last Friday of this month.",
-      image: "././Scholarship Applications Now Open.jpg"
+      image: "images/scholarship-applications.jpg"
     },
     {
       id: generateId(),
@@ -644,7 +763,7 @@ function sampleNews() {
       date: daysFromNow(-1),
       description: "Portions of the main road will undergo repair starting next week.",
       details: "The public works office will begin road repair along the main road starting next week. One lane will be closed during working hours from 8:00 AM to 5:00 PM. Residents are advised to use alternate routes and to follow traffic personnel.",
-      image: "././Road Repair.jfif"
+      image: "images/road-repair.jpg"
     },
     {
       id: generateId(),
@@ -653,7 +772,7 @@ function sampleNews() {
       date: daysFromNow(0),
       description: "The community garden project harvested its first vegetables this week.",
       details: "The shared community garden project harvested its first batch of vegetables this week. The harvested produce was distributed to participating families. The community office encourages more residents to join the gardening group.",
-      image: "././Community-Garden.webp"
+      image: "images/community-garden.webp"
     }
   ];
 }
@@ -666,7 +785,9 @@ function sampleAnnouncements() {
       category: "Public Notice",
       date: daysFromNow(2),
       status: "Important",
-      description: "Water service will be paused from 8:00 AM to 2:00 PM for pipe maintenance."
+      description: "Water service will be paused from 8:00 AM to 2:00 PM for pipe maintenance.",
+      image: "images/water-service-interruption.jpg",
+      images: ["images/water-service-interruption.jpg"]
     },
     {
       id: generateId(),
@@ -674,7 +795,9 @@ function sampleAnnouncements() {
       category: "Community",
       date: daysFromNow(5),
       status: "Upcoming",
-      description: "All residents are invited to the quarterly assembly at the community hall."
+      description: "All residents are invited to the quarterly assembly at the community hall.",
+      image: "images/barangay-assembly-meeting.jpg",
+      images: ["images/barangay-assembly-meeting.jpg"]
     },
     {
       id: generateId(),
@@ -682,7 +805,9 @@ function sampleAnnouncements() {
       category: "Health",
       date: daysFromNow(8),
       status: "Active",
-      description: "Free check-ups, blood pressure screening, and medicines for all residents."
+      description: "Free check-ups, blood pressure screening, and medicines for all residents.",
+      image: "images/free-medical-mission.jpg",
+      images: ["images/free-medical-mission.jpg"]
     },
     {
       id: generateId(),
@@ -690,7 +815,9 @@ function sampleAnnouncements() {
       category: "Education",
       date: daysFromNow(10),
       status: "Upcoming",
-      description: "Elementary students may claim free school supplies at the community office."
+      description: "Elementary students may claim free school supplies at the community office.",
+      image: "images/school-supplies-distribution.jpg",
+      images: ["images/school-supplies-distribution.jpg"]
     },
     {
       id: generateId(),
@@ -698,7 +825,9 @@ function sampleAnnouncements() {
       category: "Events",
       date: daysFromNow(3),
       status: "Active",
-      description: "Team registration for the inter-purok basketball tournament is now open."
+      description: "Team registration for the inter-purok basketball tournament is now open.",
+      image: "images/basketball-tournament-registration.jpg",
+      images: ["images/basketball-tournament-registration.jpg"]
     },
     {
       id: generateId(),
@@ -706,7 +835,9 @@ function sampleAnnouncements() {
       category: "Public Notice",
       date: daysFromNow(6),
       status: "Notice",
-      description: "Households in Purok 1 to 3 will be visited for fire safety inspection."
+      description: "Households in Purok 1 to 3 will be visited for fire safety inspection.",
+      image: "images/fire-safety-inspection.webp",
+      images: ["images/fire-safety-inspection.webp"]
     },
     {
       id: generateId(),
@@ -714,7 +845,9 @@ function sampleAnnouncements() {
       category: "Community",
       date: daysFromNow(12),
       status: "Upcoming",
-      description: "Monthly gathering and pension assistance concerns at the senior center."
+      description: "Monthly gathering and pension assistance concerns at the senior center.",
+      image: "images/senior-citizens-monthly-meeting.jpg",
+      images: ["images/senior-citizens-monthly-meeting.jpg"]
     },
     {
       id: generateId(),
@@ -722,7 +855,9 @@ function sampleAnnouncements() {
       category: "Education",
       date: daysFromNow(4),
       status: "Active",
-      description: "Free weekend reading sessions for children aged 6 to 10 years old."
+      description: "Free weekend reading sessions for children aged 6 to 10 years old.",
+      image: "images/reading-program-for-kids.jpg",
+      images: ["images/reading-program-for-kids.jpg"]
     }
   ];
 }
@@ -780,7 +915,7 @@ function sampleActivities() {
       date: daysFromNow(-10),
       location: "Community Plaza",
       description: "Residents worked together to clean the plaza and surrounding streets.",
-      image: "././Cleanup-drive-1024x682.webp"
+      image: "images/cleanup-drive.webp"
     },
     {
       id: generateId(),
@@ -788,7 +923,7 @@ function sampleActivities() {
       date: daysFromNow(-8),
       location: "Youth Center",
       description: "Young leaders joined team-building games and community planning talks.",
-      image: "././Youth Leadership Activity.jfif"
+      image: "images/youth-leadership-activity.jpg"
     },
     {
       id: generateId(),
@@ -796,7 +931,7 @@ function sampleActivities() {
       date: daysFromNow(-6),
       location: "Covered Court",
       description: "Friendly basketball matches among teams from different puroks.",
-      image: "././Inter-Purok Sports Activity.jfif"
+      image: "images/inter-purok-sports-activity.jpg"
     },
     {
       id: generateId(),
@@ -804,7 +939,7 @@ function sampleActivities() {
       date: daysFromNow(-4),
       location: "Elementary School",
       description: "Volunteer teachers gave free reading and math tutorials for kids.",
-      image: "././Educational Tutorial Program.jpg"
+      image: "images/educational-tutorial-program.jpg"
     },
     {
       id: generateId(),
@@ -812,7 +947,7 @@ function sampleActivities() {
       date: daysFromNow(-2),
       location: "Riverside Area",
       description: "Volunteers planted 150 seedlings along the riverbank.",
-      image: "././Volunteer Tree Planting.webp"
+      image: "images/volunteer-tree-planting.webp"
     },
     {
       id: generateId(),
@@ -820,19 +955,19 @@ function sampleActivities() {
       date: daysFromNow(0),
       location: "Community Hall",
       description: "Residents turned over recyclable waste for the segregation program.",
-      image: "././Environmental Recycling Drive.webp"
+      image: "images/environmental-recycling-drive.webp"
     }
   ];
 }
 
 function sampleGallery() {
   return [
-    { id: generateId(), image: "././community-01.jpg", caption: "Community Plaza", date: daysFromNow(-12) },
-    { id: generateId(), image: "././community-02.jpg", caption: "Residents Assembly", date: daysFromNow(-10) },
-    { id: generateId(), image: "././Cleanup-drive-1024x682.webp", caption: "Clean-Up Drive", date: daysFromNow(-8) },
-    { id: generateId(), image: "././Cleanup-drive-1024x682.webp", caption: "Volunteers at Work", date: daysFromNow(-6) },
-    { id: generateId(), image: "././New Health Center Now Open for Residents.jfif", caption: "Health Center Visit", date: daysFromNow(-4) },
-    { id: generateId(), image: "././Youth Sports League Kicks Off This Month.jfif", caption: "Youth Sports Activity", date: daysFromNow(-2) }
+    { id: generateId(), image: "images/community-plaza.jpg", caption: "Community Plaza", date: daysFromNow(-12) },
+    { id: generateId(), image: "images/residents-assembly.webp", caption: "Residents Assembly", date: daysFromNow(-10) },
+    { id: generateId(), image: "images/cleanup-drive.webp", caption: "Clean-Up Drive", date: daysFromNow(-8) },
+    { id: generateId(), image: "images/cleanup-drive.webp", caption: "Volunteers at Work", date: daysFromNow(-6) },
+    { id: generateId(), image: "images/health-center-visit.jpg", caption: "Health Center Visit", date: daysFromNow(-4) },
+    { id: generateId(), image: "images/youth-sports-league.jpg", caption: "Youth Sports Activity", date: daysFromNow(-2) }
   ];
 }
 
@@ -850,6 +985,9 @@ function loadList(key, sampleFunction) {
     return sample;
   }
   var list = getData(key, []);
+  // Normalize legacy media paths before the first render. The migration
+  // below persists the same repair later in startup.
+  if (Array.isArray(list)) list.forEach(normalizeItemMedia);
   return list;
 }
 
@@ -1892,7 +2030,7 @@ var lightboxIndex = 0;   // which photo is open
 function renderGalleryItem(item, index) {
   return '' +
     '<figure class="gallery-item" data-index="' + index + '">' +
-      '<img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.caption) + '">' +
+      '<img src="' + escapeHtml(normalizeMediaSrc(item.image)) + '" alt="' + escapeHtml(item.caption) + '">' +
       '<figcaption class="caption">' + escapeHtml(item.caption) + '<br>' +
         '<small>' + formatDate(item.date) + '</small></figcaption>' +
     '</figure>';
@@ -1903,7 +2041,7 @@ function openLightbox(index) {
   if (galleryItems.length === 0) return;
   lightboxIndex = index;
   var item = galleryItems[index];
-  document.getElementById("lightboxImage").src = item.image;
+  document.getElementById("lightboxImage").src = normalizeMediaSrc(item.image);
   document.getElementById("lightboxCaption").textContent =
     item.caption + " - " + formatDate(item.date);
   document.getElementById("lightbox").classList.add("open");
@@ -2349,7 +2487,7 @@ function bindTableSearch(inputId, renderFn) {
 
 function tableThumb(src) {
   if (!src) return "";
-  return '<img class="table-thumb" src="' + escapeHtml(src) + '" alt="">';
+  return '<img class="table-thumb" src="' + escapeHtml(normalizeMediaSrc(src)) + '" alt="">';
 }
 
 function wirePathPreview(pathId, previewId) {
@@ -2365,7 +2503,7 @@ function wirePathPreview(pathId, previewId) {
     }
     preview.onload = function () { preview.classList.add("show"); };
     preview.onerror = function () { preview.classList.remove("show"); };
-    preview.src = v;
+    preview.src = normalizeMediaSrc(v);
   });
 }
 
@@ -3306,7 +3444,7 @@ function renderGalleryTable() {
   body.innerHTML = items.map(function (item) {
     return '' +
       '<tr>' +
-        '<td data-label=""><img class="table-thumb" src="' + escapeHtml(item.image) + '" alt=""></td>' +
+        '<td data-label=""><img class="table-thumb" src="' + escapeHtml(normalizeMediaSrc(item.image)) + '" alt=""></td>' +
         '<td data-label="' + t("Caption") + '">' + escapeHtml(item.caption) + '</td>' +
         '<td data-label="' + t("Date") + '">' + formatDate(item.date) + '</td>' +
         '<td data-label="' + t("Actions") + '">' +
@@ -3368,7 +3506,7 @@ function initGalleryAdmin() {
   form.addEventListener("submit", function (event) {
     event.preventDefault();
 
-    var image = document.getElementById("galleryImage").value.trim();
+    var image = normalizeMediaSrc(document.getElementById("galleryImage").value);
     var caption = document.getElementById("galleryCaption").value.trim();
     var date = document.getElementById("galleryDate").value;
 
@@ -5371,7 +5509,7 @@ function showUserGalleryPhoto(index) {
   var item = galleryItems[index];
   if (!item) return;
   openDetailModal(item.caption, formatDate(item.date),
-    '<img src="' + escapeHtml(item.image) + '" alt="" style="border-radius:4px;">');
+    '<img src="' + escapeHtml(normalizeMediaSrc(item.image)) + '" alt="" style="border-radius:4px;">');
 }
 
 // Fill the "My Profile" form and save changes
@@ -5515,7 +5653,7 @@ function renderUserDashboardContent() {
     dashGalleryBox.innerHTML = galleryItems.map(function (item, index) {
       return '' +
         '<figure class="gallery-item" onclick="showUserGalleryPhoto(' + index + ')">' +
-          '<img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.caption) + '">' +
+          '<img src="' + escapeHtml(normalizeMediaSrc(item.image)) + '" alt="' + escapeHtml(item.caption) + '">' +
           '<figcaption class="caption">' + escapeHtml(item.caption) + '<br>' +
             '<small>' + formatDate(item.date) + '</small></figcaption>' +
         '</figure>';
@@ -6710,7 +6848,7 @@ function renderOfficialCommunity() {
     galleryBox.innerHTML = galleryItems.map(function (item, index) {
       return '' +
         '<figure class="gallery-item" onclick="showUserGalleryPhoto(' + index + ')">' +
-          '<img src="' + escapeHtml(item.image) + '" alt="' + escapeHtml(item.caption) + '">' +
+          '<img src="' + escapeHtml(normalizeMediaSrc(item.image)) + '" alt="' + escapeHtml(item.caption) + '">' +
           '<figcaption class="caption">' + escapeHtml(item.caption) + '<br>' +
             '<small>' + formatDate(item.date) + '</small></figcaption>' +
         '</figure>';
@@ -9383,9 +9521,9 @@ var MAX_MEDIA_VIDEOS = 3;
 function getMediaImages(item) {
   if (!item) return [];
   if (Array.isArray(item.images)) {
-    return item.images.map(function (s) { return String(s || "").trim(); }).filter(Boolean);
+    return item.images.map(function (s) { return normalizeMediaSrc(s); }).filter(Boolean);
   }
-  var single = item.image ? String(item.image).trim() : "";
+  var single = normalizeMediaSrc(item.image);
   return single ? [single] : [];
 }
 
@@ -9398,9 +9536,9 @@ function getNewsImages(item) { return getMediaImages(item); }
 function getMediaVideos(item) {
   if (!item) return [];
   if (Array.isArray(item.videos)) {
-    return item.videos.map(function (s) { return String(s || "").trim(); }).filter(Boolean);
+    return item.videos.map(function (s) { return normalizeMediaSrc(s); }).filter(Boolean);
   }
-  var single = item.video ? String(item.video).trim() : "";
+  var single = normalizeMediaSrc(item.video);
   return single ? [single] : [];
 }
 
@@ -9419,12 +9557,12 @@ function readImagesField(jsonPathId, pathId) {
     try {
       var arr = JSON.parse(jsonEl.value);
       if (Array.isArray(arr)) {
-        return arr.map(function (s) { return String(s || "").trim(); }).filter(Boolean);
+        return arr.map(function (s) { return normalizeMediaSrc(s); }).filter(Boolean);
       }
     } catch (e) { /* fall through to the path box */ }
   }
   var pathEl = document.getElementById(pathId);
-  var single = pathEl ? pathEl.value.trim() : "";
+  var single = pathEl ? normalizeMediaSrc(pathEl.value) : "";
   return single ? [single] : [];
 }
 
@@ -9441,7 +9579,7 @@ function renderImageStrip(stripId, countId, images) {
     if (images.length) {
       images.forEach(function (src, i) {
         var im = document.createElement("img");
-        im.src = src;
+        im.src = normalizeMediaSrc(src);
         im.alt = "Selected photo " + (i + 1);
         strip.appendChild(im);
       });
@@ -9480,7 +9618,7 @@ function setImagesField(jsonPathId, pathId, previewId, stripId, countId, images)
   if (pathEl) pathEl.value = images.length ? images[0] : "";
   var preview = document.getElementById(previewId);
   if (preview) {
-    if (images.length) { preview.src = images[0]; preview.classList.add("show"); }
+    if (images.length) { preview.src = normalizeMediaSrc(images[0]); preview.classList.add("show"); }
     else { preview.classList.remove("show"); preview.removeAttribute("src"); }
   }
   renderImageStrip(stripId, countId, images);
@@ -10360,7 +10498,7 @@ var DATA_KEYS = ["communityNews", "communityAnnouncements", "communityEvents",
   "communityUserPosts", "communityUserAlerts"];
 
 // Current LocalStorage layout; bump when migration steps are added
-var SCHEMA_VERSION = 13;
+var SCHEMA_VERSION = 14;
 
 // Bring old browser storage up to the current layout (runs once per version)
 function runMigrations() {
@@ -10657,6 +10795,20 @@ function runMigrations() {
   // the resident form, official dashboard, and backups all see the key.
   if (stored < 13) {
     if (getData(INCIDENTS_KEY, null) === null) setData(INCIDENTS_KEY, []);
+  }
+
+  // v13 -> v14: repair legacy media paths so every bundled image resolves
+  // from GitHub Pages, the local Node server, and a plain file:// launch.
+  if (stored < 14) {
+    ["communityNews", "communityAnnouncements", "communityActivities", "communityGallery"].forEach(function (key) {
+      var items = getData(key, []);
+      if (!Array.isArray(items)) return;
+      var changed = false;
+      items.forEach(function (item) {
+        if (normalizeItemMedia(item)) changed = true;
+      });
+      if (changed) setData(key, items);
+    });
   }
 
   localStorage.setItem("communitySchemaVersion", String(SCHEMA_VERSION));

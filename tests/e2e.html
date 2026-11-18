@@ -2445,7 +2445,7 @@
       localStorage.setItem("communityNews", JSON.stringify([{
         id: "e2e_order_news", title: "ZZ Order Story", category: "Community",
         date: "2026-10-09", description: "Caption above the image.",
-        image: "images/Community-Garden.webp", images: ["images/Community-Garden.webp"]
+        image: "images/community-garden.webp", images: ["images/community-garden.webp"]
       }]));
       f = await loadPage("news.html");
       if (assert(!!f, "feed order: news page loads")) {
@@ -2491,7 +2491,7 @@
       }));
       localStorage.setItem("communityNews", JSON.stringify([{
         id: "n_prof", title: "ZZ Profile Story", category: "Community", date: "2026-10-13",
-        description: "Posted by the admin profile.", image: "images/Community-Garden.webp",
+        description: "Posted by the admin profile.", image: "images/community-garden.webp",
         postedBy: "Kapitan Juan", createdAt: "2026-10-13T08:00:00Z"
       }]));
       localStorage.setItem("communityComments", JSON.stringify([{

@@ -20,6 +20,29 @@ backend. All data lives in `localStorage` in the browser.
 
   The service worker (`sw.js`) only activates on `http://` or `https://`.
 
+### Publish on GitHub Pages
+
+1. Push the `main` branch to the GitHub repository.
+2. In the repository, open **Settings → Pages**.
+3. Under **Build and deployment**, choose **Deploy from a branch**, select
+   `main` and `/ (root)`, then save.
+4. GitHub will publish the site at
+   `https://<your-github-user>.github.io/<repository-name>/`.
+
+The site uses repository-relative links for `css/style.css`, `js/script.js`,
+and every bundled image. Image filenames are lowercase and stored under
+`images/`, so the stylesheet and photos load correctly on GitHub Pages as
+well as on the local Node server. The service worker cache is versioned and
+refreshes automatically after an update.
+
+> **Important:** this project stores posts, accounts, and uploaded photos in
+> the browser's `localStorage`. GitHub Pages publishes the **website and its
+> bundled sample content**, but a post added in the admin panel is visible
+> only in the browser where it was added. Sharing newly published posts with
+> every visitor requires a shared backend/database; use the admin's
+> **Settings → Data & Backup → Export JSON** for a portable backup in the
+> meantime.
+
 ### Go Live (real-time streaming)
 
 Everything above is fully static, but **Go Live** streams a live
@@ -536,7 +559,7 @@ Residents and Barangay Officials share **one login form**
 | `user-dashboard.html` | User: overview, browse, saved items, notifications, **Barangay Services** — **certificate requests** (file + track) and **incident reports** (report + track), profile (incl. **barangay**), **live broadcast player**, **emergency alert popup** (30s alarm + AI voice), **Community Feed** (Lost & Found composer + Like/Comment/Share/Save) |
 | `official-dashboard.html` | Barangay Official: request + incident stats, on-duty toggle, **certificate requests** (review / mark ready / reject / release capture / **print** / bulk / export), **incident reports** (claim / response timeline / severity + escalation / CSV), incident-response KPIs + chart, the same **Facebook-style community feeds** as residents (**Community News**, **Announcements**, **Activities** + **Upcoming Events** RSVP + **Gallery** lightbox) with Like / Comment / Share / Save, filterable notification bell (All / Incidents / Certificates) with alert sound, **My Profile**, the **Community Feed** (Lost & Found, with **ALERT COMMUNITY**), and the **emergency alert popup** (30s alarm + AI voice) |
 | `offline.html` | Offline fallback page |
-| `manifest.json`, `sw.js` | PWA manifest + service worker (cache v35) |
+| `manifest.json`, `sw.js` | PWA manifest + service worker (cache v36) |
 | `server.js` | Optional zero-dependency Node server: static file hosting + WebSocket relay for Go Live |
 | `css/style.css` | All styles, numbered sections, dark theme, print, reduced-motion, the section 57 polish layer with design tokens, the section 58 mobile view, the section 60 sidebar rail redesign, and the section 67 VERSO auth card |
 | `js/script.js` | All logic: i18n, renderers, admin, comments, notifications, audit, migrations, toasts, charts, Go Live transport + player, **Barangay Officials + certificate services** |
@@ -545,6 +568,7 @@ Residents and Barangay Officials share **one login form**
 | `tests/e2e.html` | End-to-end test suite (706 assertions) |
 | `tests/e2e-run.cjs` | Headless runner for the suite: launches Chrome via the DevTools Protocol, waits for real completion, and prints the pass/fail tally |
 | `tests/relay-test.cjs` | Headless test for `server.js`: static serving, path-traversal guard, and WebSocket relay of text + binary frames |
+| `tests/static-assets-test.cjs` | Verifies that every local HTML/CSS/JS/service-worker asset path exists and bundled image names remain deployment-safe |
 
 ### Key internal modules in `js/script.js`
 
@@ -599,6 +623,13 @@ node tests/e2e-run.cjs
 
 Set `CHROME_PATH` if Chrome is not in a standard location, and `PORT` /
 `TIMEOUT_MS` if needed. The runner exits non-zero on any failure.
+
+Check that every local stylesheet, script, page, and bundled image referenced
+by the site still exists:
+
+```
+node tests/static-assets-test.cjs
+```
 
 **Or open `tests/e2e.html`** normally in a desktop browser. A quick
 `chrome --dump-dom --virtual-time-budget=…` run also works but can report a
